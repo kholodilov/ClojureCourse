@@ -2,6 +2,9 @@
   (:use [task02 helpers db])
   (:use [clojure.core.match :only (match)]))
 
+(declare do-parse)
+
+
 ;; Функция выполняющая парсинг запроса переданного пользователем
 ;;
 ;; Синтаксис запроса:
@@ -36,12 +39,26 @@
 ;; > (parse-select "werfwefw")
 ;; nil
 (defn parse-select [^String sel-string]
-  (let [check (vec (.split sel-string " "))]
-    (match check
-           ["select" tb & _] (list tb)
-           :else nil)))
+  (let [sel-vec (vec (.split sel-string " "))]
+    (do-parse sel-vec)))
 
-(defn make-where-function [& args] :implement-me)
+(defn make-where-function [column comp-op value]
+  (let [comp-op-norm (match comp-op "!=" "not=" :else comp-op)
+        value-norm (match (re-matches #"'(.*)'" value) [_ str] str :else (Integer/parseInt value))
+        func (resolve (symbol comp-op-norm))
+        col (keyword column)]
+    (fn [data] (println (col data)) (func (col data) value-norm))))
+
+(defn do-parse [sel-vec]
+  (match sel-vec
+    ["select" tb & rest]
+      (cons tb (do-parse rest))
+    ["where" column comp-op value & rest]
+      (cons :where (cons (make-where-function column comp-op value) (do-parse rest)))
+    []
+      (list)
+    :else nil))
+
 
 ;; Выполняет запрос переданный в строке.  Бросает исключение если не удалось распарсить запрос
 

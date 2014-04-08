@@ -26,7 +26,7 @@
       (is (nil? joins))
       (is (nil? limit))))
 
-  (testing (str "parse-select on 'select student where id = 10'")
+  (testing (str "parse-select on 'select student where id = 10 order by year limit 5 join subject on id = sid'")
     (let [[tb-name & {:keys [where limit order-by joins]}]
           (parse-select "select student where id = 10 order by year limit 5 join subject on id = sid")]
       (is (= tb-name "student"))
@@ -39,7 +39,9 @@
 
 (deftest perform-query-test
   (testing "perform-query"
-      (is (perform-query "select student where year = 1997")
-          '({:year 1997, :surname "Petrov", :id 2}))
-      (is (perform-query "select student where year = 1111")
-          '())))
+      (is (= (perform-query "select student where year = 1997")
+            '({:year 1997, :surname "Petrov", :id 2})))
+      (is (= (perform-query "select student where surname = 'Sidorov'")
+            '({:year 1996, :surname "Sidorov", :id 3})))
+      (is (= (perform-query "select student where year = 1111")
+            '()))))
