@@ -43,18 +43,24 @@
     (do-parse sel-vec)))
 
 (defn make-where-function [column comp-op value]
-  (let [comp-op-norm (match comp-op "!=" "not=" :else comp-op)
-        value-norm (match (re-matches #"'(.*)'" value) [_ str] str :else (Integer/parseInt value))
+  (let [comp-op-norm (if (= comp-op "!=") "not=" comp-op)
+        value-norm (match (re-matches #"'(.*)'" value) [_ str] str :else (parse-int value))
         func (resolve (symbol comp-op-norm))
         col (keyword column)]
-    (fn [data] (println (col data)) (func (col data) value-norm))))
+    (fn [data] (func (col data) value-norm))))
 
 (defn do-parse [sel-vec]
   (match sel-vec
     ["select" tb & rest]
-      (cons tb (do-parse rest))
+      (list* tb (do-parse rest))
     ["where" column comp-op value & rest]
-      (cons :where (cons (make-where-function column comp-op value) (do-parse rest)))
+      (list* :where (make-where-function column comp-op value) (do-parse rest))
+    ["order" "by" column & rest]
+      (list* :order-by (keyword column) (do-parse rest))
+    ["limit" n & rest]
+      (list* :limit (parse-int n) (do-parse rest))
+    ["join" tb "on" left-col "=" right-col]
+      (list :joins [[(keyword left-col) tb (keyword right-col)]])
     []
       (list)
     :else nil))
