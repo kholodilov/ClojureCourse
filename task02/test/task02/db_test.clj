@@ -21,8 +21,15 @@
     (delete student :where (q/make-where-function "id" "=" "1"))
     (let [rs (q/perform-query "select student where id = 1")]
       (is (empty? rs)))
-    (is (= (count (q/perform-query "select student")) 2))
+      (is (= (count (q/perform-query "select student")) 2))
     ))
+
+(deftest delete-all-test
+  (load-initial-data)
+  (testing "total deletion..."
+    (delete student)
+    (let [rs (q/perform-query "select student")]
+      (is (empty? rs)))))
 
 (deftest update-test
   (load-initial-data)
