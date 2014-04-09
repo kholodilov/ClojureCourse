@@ -46,3 +46,12 @@
       (is (= (:year (first rs)) 2000))
       )
     ))
+
+(deftest update-all-test
+  (load-initial-data)
+  (testing "total update..."
+    (update student {:year 2000})
+    (let [rs (q/perform-query "select student where year = 2000")]
+      (is (= (count rs) 3))
+      )
+    ))

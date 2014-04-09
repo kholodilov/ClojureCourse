@@ -21,9 +21,9 @@
   (update-in rec [field] parse-int))
 
 ;; Место для хранения данных - используйте atom/ref/agent/...
-(def student (ref ()))
-(def subject (ref ()))
-(def student-subject (ref ()))
+(def student (ref '()))
+(def subject (ref '()))
+(def student-subject (ref '()))
 
 ;; функция должна вернуть мутабельный объект используя его имя
 (defn get-table [^String tb-name]
@@ -99,10 +99,9 @@
 ;;   (delete student) -> []
 ;;   (delete student :where #(= (:id %) 1)) -> все кроме первой записи
 (defn delete [data & {:keys [where]}]
-  (dosync
-    (let [where* (if-not (nil? where) where (constantly true))
-          remove* (partial remove where*)]
-      (alter data remove*))))
+  (let [where* (if-not (nil? where) where (constantly true))
+        remove* (partial remove where*)]
+    (dosync (alter data remove*))))
 
 ;; Данная функция должна обновить данные в строках соответствующих указанному предикату
 ;; (или во всей таблице).
@@ -114,8 +113,9 @@
 ;;   (update student {:id 5})
 ;;   (update student {:id 6} :where #(= (:year %) 1996))
 (defn update [data upd-map & {:keys [where]}]
-  :implement-me
-  )
+  (let [where* (if-not (nil? where) where (constantly true))
+        update* (fn [data] (for [row data :when (where* row)] (merge row upd-map)))]
+    (dosync (alter data update*))))
 
 
 ;; Вставляет новую строку в указанную таблицу

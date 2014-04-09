@@ -5,8 +5,6 @@
             ))
 
 
-(db/load-initial-data)
-
 (deftest parse-select-test
   (testing (str "parse-select on 'select student'")
     (let [[tb-name & {:keys [where limit order-by joins]}]
@@ -38,6 +36,7 @@
 
 
 (deftest perform-query-test
+  (db/load-initial-data)
   (testing "perform-query"
       (is (= (perform-query "select student where year = 1997")
             '({:year 1997, :surname "Petrov", :id 2})))
