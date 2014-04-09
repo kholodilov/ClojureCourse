@@ -36,7 +36,7 @@
 
 ;;; Данная функция загружает начальные данные из файлов .csv
 ;;; и сохраняет их в изменяемых переменных student, subject, student-subject
-(defn load-initial-data []
+(defn  load-initial-data []
   ;;; :implement-me может быть необходимо добавить что-то еще
   (dosync (ref-set student (->> (data-table (csv/read-csv (slurp "student.csv")))
                      (map #(str-field-to-int :id %))
