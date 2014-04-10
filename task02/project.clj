@@ -1,4 +1,4 @@
-(defproject by.clojurecourse/task02 "0.1.0"
+(defproject by.clojurecourse/task02 "0.1.0-SNAPSHOT"
   :description "Homework 2 for Clojure Course"
   :url "http://clojurecourse.by"
   :license {:name "Eclipse Public License"
