@@ -38,21 +38,34 @@
 ;; ("student" :where #<function> :order-by :id :limit 2 :joins [[:id "subject" :sid]])
 ;; > (parse-select "werfwefw")
 ;; nil
-(defn parse-select [^String sel-string]
-  (let [sel-vec (vec (.split sel-string " "))]
-    (do-parse sel-vec)))
+(defn parse-query [^String query]
+  (let [query-vec (vec (.split query " "))]
+    (do-parse query-vec)))
+
+(defn normalize-value [value]
+  (match (re-matches #"'(.*)'" value)
+    [_ str]
+      str
+    :else
+      (parse-int value)))
 
 (defn make-where-function [column comp-op value]
   (let [comp-op-norm (if (= comp-op "!=") "not=" comp-op)
-        value-norm (match (re-matches #"'(.*)'" value) [_ str] str :else (parse-int value))
+        value-norm (normalize-value value)
         func (resolve (symbol comp-op-norm))
         col (keyword column)]
     (fn [data] (func (col data) value-norm))))
 
-(defn do-parse [sel-vec]
-  (match sel-vec
+(defn do-parse [query-vec]
+  (match query-vec
     ["select" tb & rest]
-      (list* tb (do-parse rest))
+      (list* "select" tb (do-parse rest))
+    ["delete" tb & rest]
+      (list* "delete" tb (do-parse rest))
+    ["update" tb & rest]
+      (list* "update" tb (do-parse rest))
+    ["set" column "=" value & rest]
+      (list* {(keyword column) (normalize-value value)} (do-parse rest))
     ["where" column comp-op value & rest]
       (list* :where (make-where-function column comp-op value) (do-parse rest))
     ["order" "by" column & rest]
@@ -65,7 +78,6 @@
       (list)
     :else nil))
 
-
 ;; Выполняет запрос переданный в строке.  Бросает исключение если не удалось распарсить запрос
 
 ;; Примеры вызова:
@@ -77,7 +89,10 @@
 ;; ({:id 2, :year 1997, :surname "Petrov"} {:id 3, :year 1996, :surname "Sidorov"})
 ;; > (perform-query "not valid")
 ;; exception...
-(defn perform-query [^String sel-string]
-  (if-let [query (parse-select sel-string)]
-    (apply select (get-table (first query)) (rest query))
-    (throw (IllegalArgumentException. (str "Can't parse query: " sel-string)))))
+(defn perform-query [^String query-string]
+  (if-let [query (parse-query query-string)]
+    (let [op (first query)
+          table (first (rest query))
+          args (rest (rest query))]
+      (apply (ns-resolve 'task02.db (symbol op)) (get-table table) args))
+    (throw (IllegalArgumentException. (str "Can't parse query: " query-string)))))

@@ -114,7 +114,7 @@
 ;;   (update student {:id 6} :where #(= (:year %) 1996))
 (defn update [data upd-map & {:keys [where]}]
   (let [where* (if-not (nil? where) where (constantly true))
-        update* (fn [data] (for [row data :when (where* row)] (merge row upd-map)))]
+        update* (fn [data] (for [row data] (if (where* row) (merge row upd-map) row)))]
     (dosync (alter data update*))))
 
 

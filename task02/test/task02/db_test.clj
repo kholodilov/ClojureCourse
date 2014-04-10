@@ -18,7 +18,7 @@
 (deftest delete-test
   (load-initial-data)
   (testing "deletion..."
-    (delete student :where (q/make-where-function "id" "=" "1"))
+    (q/perform-query "delete student where id = 1")
     (let [rs (q/perform-query "select student where id = 1")]
       (is (empty? rs)))
       (is (= (count (q/perform-query "select student")) 2))
@@ -27,7 +27,7 @@
 (deftest delete-all-test
   (load-initial-data)
   (testing "total deletion..."
-    (delete student)
+    (q/perform-query "delete student")
     (let [rs (q/perform-query "select student")]
       (is (empty? rs)))))
 
@@ -39,7 +39,10 @@
       (is (= (count rs) 1))
       (is (= (:year (first rs)) 1998))
       )
-    (update student {:year 2000} :where (q/make-where-function "id" "=" "1"))
+    (q/perform-query "update student set year = 2000 where id = 1")
+    (let [rs (q/perform-query "select student")]
+      (is (= (count rs) 3))
+      )
     (let [rs (q/perform-query "select student where id = 1")]
       (is (not (empty? rs)))
       (is (= (count rs) 1))
@@ -50,7 +53,7 @@
 (deftest update-all-test
   (load-initial-data)
   (testing "total update..."
-    (update student {:year 2000})
+    (q/perform-query "update student set year = 2000")
     (let [rs (q/perform-query "select student where year = 2000")]
       (is (= (count rs) 3))
       )
