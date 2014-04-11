@@ -83,11 +83,12 @@
 ;;   (select student-subject :joins [[:student_id "student" :id] [:subject_id "subject" :id]])
 ;;   (select student-subject :limit 2 :joins [[:student_id "student" :id] [:subject_id "subject" :id]])
 (defn select [data & {:keys [where limit order-by joins]}]
-  (-> @data
-      (perform-joins joins)
-      (where* where)
-      (order-by* order-by)
-      (limit* limit)))
+  (dosync
+    (-> @data
+        (perform-joins joins)
+        (where* where)
+        (order-by* order-by)
+        (limit* limit))))
 
 ;; insert/update/delete...
 
