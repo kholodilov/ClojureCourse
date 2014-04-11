@@ -8,12 +8,13 @@
 (deftest insert-test
   (load-initial-data)
   (testing "insertion..."
-    (insert student {:id 10 :surname "Test" :year 2000})
+    (q/perform-query "insert into student with id = 10 with surname = 'Test' with year = 2000")
     (let [rs (q/perform-query "select student where id = 10")]
       (is (not (empty? rs)))
       (is (= (count rs) 1))
-      (is (= (:year (first rs)) 2000)))
-    ))
+      (is (= (:id (first rs)) 10))
+      (is (= (:surname (first rs)) "Test"))
+      (is (= (:year (first rs)) 2000)))))
 
 (deftest delete-test
   (load-initial-data)
@@ -40,14 +41,12 @@
       (is (= (:year (first rs)) 1998))
       )
     (q/perform-query "update student set year = 2000 where id = 1")
-    (let [rs (q/perform-query "select student")]
-      (is (= (count rs) 3))
-      )
     (let [rs (q/perform-query "select student where id = 1")]
       (is (not (empty? rs)))
       (is (= (count rs) 1))
       (is (= (:year (first rs)) 2000))
       )
+    (is (= (count (q/perform-query "select student")) 3))
     ))
 
 (deftest update-all-test

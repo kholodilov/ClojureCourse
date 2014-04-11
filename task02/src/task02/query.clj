@@ -64,8 +64,12 @@
       (list* "delete" tb (do-parse rest))
     ["update" tb & rest]
       (list* "update" tb (do-parse rest))
+    ["insert" "into" tb & rest]
+      (list "insert" tb (do-parse rest))
     ["set" column "=" value & rest]
       (list* {(keyword column) (normalize-value value)} (do-parse rest))
+    ["with" column "=" value & rest]
+      (merge {(keyword column) (normalize-value value)} (do-parse rest))
     ["where" column comp-op value & rest]
       (list* :where (make-where-function column comp-op value) (do-parse rest))
     ["order" "by" column & rest]

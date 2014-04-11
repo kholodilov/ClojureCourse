@@ -66,6 +66,14 @@
       (is (= upd-map {:year 2000}))
       (is (nil? where)))))
 
+(deftest parse-insert-test
+  (testing "parse-insert"
+    (let [[op tb-name entry]
+          (parse-query "insert into student with id = 10 with surname = 'Petrov'")]
+      (is (= op "insert"))
+      (is (= tb-name "student"))
+      (is (= entry {:id 10 :surname "Petrov"})))))
+
 (deftest perform-query-select-test
   (db/load-initial-data)
   (testing "perform-query select"
