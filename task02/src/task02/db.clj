@@ -32,6 +32,7 @@
      (= lname "student") student
      (= lname "subject") subject
      (= lname "student-subject") student-subject
+     :else (throw (IllegalArgumentException. (str "No such table: " lname)))
      )))
 
 ;;; Данная функция загружает начальные данные из файлов .csv
