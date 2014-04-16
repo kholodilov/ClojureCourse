@@ -19,11 +19,32 @@
   (testing (str "parse-select on 'select student where id = 10'")
     (let [[op tb-name & {:keys [where limit order-by joins]}]
           (parse-query "select student where id = 10")]
+      (is (= op "select"))
       (is (= tb-name "student"))
       (is (fn? where))
       (is (nil? order-by))
       (is (nil? joins))
       (is (nil? limit))))
+
+  (testing (str "parse-select on 'select student order by year'")
+    (let [[op tb-name & {:keys [where limit order-by joins]}]
+          (parse-query "select student order by year")]
+      (is (= op "select"))
+      (is (= tb-name "student"))
+      (is (nil? where))
+      (is (= order-by :year))
+      (is (nil? joins))
+      (is (nil? limit))))
+
+  (testing (str "parse-select on 'select student limit 5'")
+    (let [[op tb-name & {:keys [where limit order-by joins]}]
+          (parse-query "select student limit 5")]
+      (is (= op "select"))
+      (is (= tb-name "student"))
+      (is (nil? where))
+      (is (nil? order-by))
+      (is (nil? joins))
+      (is (= limit 5))))
 
   (testing (str "parse-select on 'select student where id = 10 order by year limit 5 join subject on id = sid'")
     (let [[op tb-name & {:keys [where limit order-by joins]}]
@@ -34,6 +55,16 @@
       (is (= order-by :year))
       (is (= limit 5))
       (is (= joins [[:id "subject" :sid]]))))
+
+  (testing (str "parse-select on malformed input")
+    (is (nil? (parse-query "select student nonsense")))
+    (is (nil? (parse-query "select student insert into student")))
+    (is (nil? (parse-query "select student update student")))
+    (is (nil? (parse-query "select student delete student")))
+    (is (nil? (parse-query "select student set id = 1")))
+    (is (nil? (parse-query "select student with id = 1")))
+    (is (nil? (parse-query "select student where id = 1 nonsense")))
+    )
   )
 
 (deftest parse-delete-test
@@ -73,6 +104,12 @@
       (is (= op "insert"))
       (is (= tb-name "student"))
       (is (= entry {:id 10 :surname "Petrov"})))))
+
+(deftest parse-malformed-input-test
+  (testing (str "parse malformed input")
+    (is (nil? (parse-query "")))
+    (is (nil? (parse-query "nonsense")))
+  ))
 
 (deftest perform-query-select-test
   (db/load-initial-data)

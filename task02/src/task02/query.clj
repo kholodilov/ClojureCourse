@@ -56,31 +56,88 @@
         col (keyword column)]
     (fn [data] (func (col data) value-norm))))
 
-(defn do-parse [query-vec]
+(defn match-join [query-vec]
   (match query-vec
-    ["select" tb & rest]
-      (list* "select" tb (do-parse rest))
-    ["delete" tb & rest]
-      (list* "delete" tb (do-parse rest))
-    ["update" tb & rest]
-      (list* "update" tb (do-parse rest))
-    ["insert" "into" tb & rest]
-      (list "insert" tb (do-parse rest))
-    ["set" column "=" value & rest]
-      (list* {(keyword column) (normalize-value value)} (do-parse rest))
-    ["with" column "=" value & rest]
-      (merge {(keyword column) (normalize-value value)} (do-parse rest))
-    ["where" column comp-op value & rest]
-      (list* :where (make-where-function column comp-op value) (do-parse rest))
-    ["order" "by" column & rest]
-      (list* :order-by (keyword column) (do-parse rest))
-    ["limit" n & rest]
-      (list* :limit (parse-int n) (do-parse rest))
     ["join" tb "on" left-col "=" right-col]
       (list :joins [[(keyword left-col) tb (keyword right-col)]])
-    []
-      (list)
+    [] '()
     :else nil))
+
+(defn match-limit [query-vec]
+  (match query-vec
+    ["limit" n & rest]
+    (if-let [rest-matched (match-join rest)]
+      (list* :limit (parse-int n) rest-matched) nil)
+    [] '()
+    :else (match-join query-vec)))
+
+(defn match-order-by [query-vec]
+  (match query-vec
+    ["order" "by" column & rest]
+      (if-let [rest-matched (match-limit rest)]
+        (list* :order-by (keyword column) rest-matched) nil)
+    [] '()
+    :else (match-limit query-vec)))
+
+(defn match-where-terminal [query-vec]
+  (match query-vec
+    ["where" column comp-op value & rest]
+      (list :where (make-where-function column comp-op value))
+    [] '()
+    :else nil))
+
+(defn match-where-select [query-vec]
+  (match query-vec
+    ["where" column comp-op value & rest]
+      (if-let [rest-matched (match-order-by rest)]
+        (list* :where (make-where-function column comp-op value) rest-matched) nil)
+    [] '()
+    :else (match-order-by query-vec)))
+
+(defn match-with [query-vec]
+  (match query-vec
+    ["with" column "=" value & rest]
+      (merge {(keyword column) (normalize-value value)} (match-with rest))
+    :else nil))
+
+(defn match-set [query-vec]
+  (match query-vec
+    ["set" column "=" value & rest]
+      (list* {(keyword column) (normalize-value value)} (match-where-terminal rest))
+    :else nil))
+
+(defn match-select [query-vec]
+  (match query-vec
+   ["select" tb & rest]
+     (if-let [rest-matched (match-where-select rest)]
+       (list* "select" tb rest-matched) nil)
+    :else nil))
+
+(defn match-insert [query-vec]
+  (match query-vec
+    ["insert" "into" tb & rest]
+      (list "insert" tb (match-with rest))
+    :else nil))
+
+(defn match-update [query-vec]
+  (match query-vec
+    ["update" tb & rest]
+      (list* "update" tb (match-set rest))
+    :else nil))
+
+(defn match-delete [query-vec]
+  (match query-vec
+    ["delete" tb & rest]
+      (list* "delete" tb (match-where-terminal rest))
+    :else nil))
+
+(defn do-parse [query-vec]
+  (or
+    (match-select query-vec)
+    (match-insert query-vec)
+    (match-update query-vec)
+    (match-delete query-vec)
+  ))
 
 ;; Выполняет запрос переданный в строке.  Бросает исключение если не удалось распарсить запрос
 
