@@ -27,6 +27,17 @@
 ;; Режим Бога -- никаких подсказок.
 ;; Вы его сами выбрали ;-)
 (defmacro with-datetime [& code]
-  :ImplementMe!)
+  `(let [~(symbol ">") (fn [d1# d2#] (> (.compareTo d1# d2#) 0))
+         ~(symbol "<=") (fn [d1# d2#] (<= (.compareTo d1# d2#) 0))]
+      ~@code))
 
+(comment
+  (macroexpand-1
+    '(with-datetime
+      (if (> today tomorrow) (println "Time goes wrong") (println "ok"))))
+      ;(if (<= yesterday today) (println "Correct") (println "wrong"))))
 
+  (with-datetime
+    (if (> today tomorrow) (println "Time goes wrong") (println "Correct"))
+    (if (<= yesterday today) (println "Correct") (println "Time goes wrong")))
+)
