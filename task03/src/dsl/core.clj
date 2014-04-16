@@ -28,14 +28,23 @@
 ;; Вы его сами выбрали ;-)
 (defmacro with-datetime [& code]
   `(let [~(symbol ">") (fn [d1# d2#] (> (.compareTo d1# d2#) 0))
-         ~(symbol "<=") (fn [d1# d2#] (<= (.compareTo d1# d2#) 0))]
+         ~(symbol "<") (fn [d1# d2#] (< (.compareTo d1# d2#) 0))
+         ~(symbol "<=") (fn [d1# d2#] (<= (.compareTo d1# d2#) 0))
+         ~(symbol ">=") (fn [d1# d2#] (>= (.compareTo d1# d2#) 0))
+         ~(symbol "day") '()
+         ~(symbol "days") '()
+         ~(symbol "week") '()
+         ~(symbol "weeks") '()
+         ~(symbol "month") '()
+         ~(symbol "months") '()
+         ~(symbol "year") '()
+         ~(symbol "years") '()]
       ~@code))
 
 (comment
   (macroexpand-1
     '(with-datetime
       (if (> today tomorrow) (println "Time goes wrong") (println "ok"))))
-      ;(if (<= yesterday today) (println "Correct") (println "wrong"))))
 
   (with-datetime
     (if (> today tomorrow) (println "Time goes wrong") (println "Correct"))
