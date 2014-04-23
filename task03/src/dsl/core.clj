@@ -27,19 +27,16 @@
         (println "DSL works correctly"))))
  )
 
-(def date-symbols
-  {
-    'day     'org.apache.commons.lang3.time.DateUtils/addDays
-    'days    'org.apache.commons.lang3.time.DateUtils/addDays
-    'week    'org.apache.commons.lang3.time.DateUtils/addWeeks
-    'weeks   'org.apache.commons.lang3.time.DateUtils/addWeeks
-    'month   'org.apache.commons.lang3.time.DateUtils/addMonths
-    'months  'org.apache.commons.lang3.time.DateUtils/addMonths
-    'year    'org.apache.commons.lang3.time.DateUtils/addYears
-    'years   'org.apache.commons.lang3.time.DateUtils/addYears
-  })
+(defn date-symbols [sym]
+  (case sym
+    (day days)      'org.apache.commons.lang3.time.DateUtils/addDays
+    (week weeks)    'org.apache.commons.lang3.time.DateUtils/addWeeks
+    (month months)  'org.apache.commons.lang3.time.DateUtils/addMonths
+    (year years)    'org.apache.commons.lang3.time.DateUtils/addYears
+    nil
+  ))
 
-(defn date-symbol? [sym] (and (symbol? sym) (contains? date-symbols sym)))
+(defn date-symbol? [sym] (not (nil? (date-symbols sym))))
 
 (defmacro with-datetime [& code]
   (let [transformed-code
@@ -48,7 +45,7 @@
              (if (list? form)
                (match (vec form)
                  [date op n (sym :guard date-symbol?)]
-                   (let [transform-fn (sym date-symbols)
+                   (let [transform-fn (date-symbols sym)
                          op-str (str op)]
                      `(~transform-fn ~date (Integer/parseInt (str ~op-str ~n))))
                  :else form)
