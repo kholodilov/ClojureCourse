@@ -38,6 +38,8 @@
 
 (defn date-symbol? [sym] (not (nil? (date-symbols sym))))
 
+(defmacro mk-compare [sym] `(fn [v1# v2#] (~sym (.compareTo v1# v2#) 0)))
+
 (defmacro with-datetime [& code]
   (let [transformed-code
          (prewalk
@@ -51,8 +53,8 @@
                  :else form)
                form))
            code)]
-  `(let [~(symbol ">") (fn [d1# d2#] (> (.compareTo d1# d2#) 0))
-         ~(symbol "<") (fn [d1# d2#] (< (.compareTo d1# d2#) 0))
-         ~(symbol "<=") (fn [d1# d2#] (<= (.compareTo d1# d2#) 0))
-         ~(symbol ">=") (fn [d1# d2#] (>= (.compareTo d1# d2#) 0))]
+  `(let [~(symbol ">") (mk-compare >)
+         ~(symbol "<") (mk-compare <)
+         ~(symbol "<=") (mk-compare <=)
+         ~(symbol ">=") (mk-compare >=)]
       ~@transformed-code)))
