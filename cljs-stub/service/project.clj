@@ -9,4 +9,5 @@
                  [korma "0.3.1"]
                  [mysql/mysql-connector-java "5.1.30"]
                  [fogus/ring-edn "0.2.0"]]
+  :plugins [[lein-ring "0.8.10"]]
   :ring {:handler service.core/app})
